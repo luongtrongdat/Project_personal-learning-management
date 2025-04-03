@@ -1,0 +1,170 @@
+.category-manager {
+    display: flex;
+    /* justify-content: space-between; */
+}
+/* Phần container */
+.container {
+    background-color: rgb(236, 234, 234);
+    border: 1px solid rgb(223, 223, 223);
+    width: 200px;
+}
+.header {
+    display: flex;
+    line-height: 58px;
+    padding: 8px;
+}
+.title {
+    line-height: 4px;
+}
+.p {
+    font-size: 14px;
+    color: gray;
+}
+.logo {
+    font-size:x-large;
+}
+.content button {
+    display: flex;
+    border: none;
+    width: 200px;
+    height: 32px;
+    border-radius: 6px;
+    background-color: rgb(236, 234, 234);
+}
+.content .lesson {
+    background-color: #83bcf8;
+}
+a {
+    text-decoration: none;
+    color: black;
+}
+.content button:hover {
+    background-color: #83bcf8;
+}
+/* Phần right*/
+.right {
+    border: 1px solid rgb(223, 223, 223);
+    width: 1200px;
+}
+.main {
+    display: flex;
+    justify-content: space-between;
+}
+.main p {
+    font-size: x-large;
+    font-weight: bold;
+    line-height: 10px;
+}
+.main select {
+    width: 259px;
+    height: 40px;
+    border-radius: 8px;
+    padding: 10px;
+}
+.main button {
+    width: 178px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    background-color: #007BFF;
+}
+.main button:hover {
+    background-color: #0162ca;
+}
+/* Phần table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+th {
+    background-color: #f4f4f4;
+}
+.active {
+    color: green;
+    background-color: rgb(215, 248, 215);
+    border: none;
+    border-radius: 20px;
+    padding: 5px;
+}
+.inactive {
+    color: red;
+    background-color: rgb(248, 215, 215);
+    border: none;
+    border-radius: 20px;
+    padding: 5px;
+}
+.delete {
+    background-color: white;
+    border: none;
+    cursor: pointer;
+    margin-right: 10px;
+}
+.edit {
+    background-color: white;
+    border: none;
+    cursor: pointer;
+}
+.pagination {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination button {
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    background-color: #ddd;
+}
+.pagination button.active {
+    background-color: #007bff;
+    color: white;
+}
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    transition: opacity 0.3s ease;
+  }
+  
+  .modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fefefe;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 40%;
+  }
+  
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}

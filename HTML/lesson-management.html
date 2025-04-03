@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý bài học</title>
+    <link rel="stylesheet" href="../CSS/lesson-management.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="category-manager">
+        <div class="container">
+            <div class="header">
+                <div class="logo">
+                    <a href="./dashboard.html">📚</a>
+                </div>
+                <div class="title">
+                    <p><b>Study Tracker</b></p>
+                    <p class="p">Quản lý tiến độ học tập</p>
+                </div>
+            </div>
+            <br>
+            <div class="content">
+                <button><a href="">📈 Thống kê</a></button>
+                <button><a href="./category-manager.html">📊 Quản lý môn học</a></button>
+                <button class="lesson"><a href="./lesson-management.html">📖 Quản lý bài học</a></button>
+            </div>
+        </div>
+        <div class="right">
+            <div>
+                <p>🔔 ⚙</p>
+                <hr>
+            </div>
+            <div class="main">
+                <p>Bài học</p>
+                <select id="status-filter">
+                    <option value="all">Lọc theo trạng thái</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Ngừng hoạt động</option>
+                </select>
+                <button id="add-lesson-btn">Thêm mới bài học</button>
+            </div>
+            <div class="search">
+                <input type="text" placeholder="Tìm kiếm môn học theo tên...">
+                <img src="../Asset/Icon/32px/Vector.png" alt="">
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" name="" id=""> Tên bài học ↓</th>
+                        <th>Thời gian học ↓</th>
+                        <th>Trạng thái</th>
+                        <th>Chức năng</th>
+                    </tr>
+                </thead>
+                <tbody id="lesson-table-body">
+                    <!-- Lesson rows will be added here -->
+                </tbody>
+            </table>
+            <div class="pagination" id="pagination">
+                <!-- Pagination buttons will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Lesson Modal -->
+    <div id="add-lesson-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Thêm mới bài học</h2>
+            <form id="add-lesson-form">
+                <label for="lesson-name">Tên bài học:</label>
+                <input type="text" id="lesson-name" name="lesson-name" required><br><br>
+
+                <label for="lesson-duration">Thời gian học:</label>
+                <input type="number" id="lesson-duration" name="lesson-duration" required><br><br>
+
+                <label for="lesson-status">Trạng thái:</label>
+                <select id="lesson-status" name="lesson-status">
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Ngừng hoạt động</option>
+                </select><br><br>
+
+                <button type="submit">Thêm</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../JS/lesson-management.js"></script>
+</body>
+</html>

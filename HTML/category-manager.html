@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý môn học</title>
+    <link rel="stylesheet" href="../CSS/category-manager.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="category-manager">
+        <div class="container">
+            <div class="header">
+                <div class="logo">
+                    <a href="./dashboard.html">📚</a>
+                </div>
+                <div class="title">
+                    <p><b>Study Tracker</b></p>
+                    <p class="p">Quản lý tiến độ học tập</p>
+                </div>
+            </div>
+            <br>
+            <div class="content">
+                <button><a href="">📈 Thống kê</a></button>
+                <button class="category"><a href="./category-manager.html">📊 Quản lý môn học</a></button>
+                <button><a href="./lesson-management.html">📖 Quản lý bài học</a></button>
+            </div>
+        </div>
+        <div class="right">
+            <div>
+                <p>🔔 ⚙</p>
+                <hr>
+            </div>
+            <div class="main">
+                <p>Môn học</p>
+                <select id="status-filter">
+                    <option value="all">Lọc theo trạng thái</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Ngừng hoạt động</option>
+                </select>
+                <button id="add-category-btn">Thêm mới môn học</button>
+            </div>
+            <div class="search">
+                <input type="text" placeholder="Tìm kiếm môn học theo tên...">
+                <img src="../Asset/Icon/32px/Vector.png" alt="">
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tên môn học ↓</th>
+                        <th>Trạng thái</th>
+                        <th>Chức năng</th>
+                    </tr>
+                </thead>
+                <tbody id="category-table-body">
+                </tbody>
+            </table>
+            <div class="pagination" id="pagination">
+            </div>
+        </div>
+    </div>
+    <div id="add-category-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Thêm mới môn học</h2>
+            <form id="add-category-form">
+                <label for="category-name">Tên môn học:</label>
+                <br>
+                <input type="text" id="category-name" name="category-name" required><br><br>
+                <label for="category-status">Trạng thái:</label>
+                <br>
+                <input type="radio" name="category-status" id="category-status-active" value="active"> Đang hoạt động
+                <input type="radio" name="category-status" id="category-status-inactive" value="inactive"> Ngừng hoạt động
+                <br><br>
+                <button class="btn" type="submit">Thêm</button>
+            </form>
+        </div>
+    </div>
+    <div id="edit-category-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-edit">&times;</span>
+            <h2>Cập nhật môn học</h2>
+            <form id="edit-category-form">
+                <input type="hidden" id="edit-category-id" name="edit-category-id">
+                <label for="edit-category-name">Tên môn học:</label>
+                <br>
+                <input type="text" id="edit-category-name" name="edit-category-name" required><br><br>
+                <label for="edit-category-status">Trạng thái:</label>
+                <br>
+                <input type="radio" name="edit-category-status" id="edit-category-status-active" value="active"> Đang hoạt động
+                <input type="radio" name="edit-category-status" id="edit-category-status-inactive" value="inactive"> Ngừng hoạt động
+                <br><br>
+                <button class="btn" type="submit">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../JS/category-manager.js"></script>
+</body>
+</html>
