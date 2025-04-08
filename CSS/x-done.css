@@ -46,7 +46,7 @@ nav a {
     margin-right: 10px;
     padding: 15px;
 }
-.tabs .all {
+.tabs .x-done {
     font-weight: bold;
     color: black;
     border-bottom: 2px solid black;
@@ -61,7 +61,7 @@ nav a {
 }
 .courses {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
 }
 .course {
@@ -86,14 +86,6 @@ nav a {
     margin-top: 10px;
     text-decoration: none;
     color: black;
-}
-.empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 220px;
-    color: #999;
-    font-size: 20px;
 }
 .footer {
     display: flex;

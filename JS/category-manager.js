@@ -39,8 +39,8 @@ document.addEventListener('DOMContentLoaded', function () {
             <td>${category.name}</td>
             <td><span class="${category.status}">${category.status === 'active' ? '● Đang hoạt động' : '● Ngừng hoạt động'}</span></td>
             <td>
-                <button class="delete" data-category-id="${category.id}"><img src="../Asset/Icon/Button.png" alt=""></button>
-                <button class="edit" data-category-id="${category.id}"><img src="../Asset/Icon/pen.png" alt=""></button>
+                <button class="delete" data-category-id="${category.id}"><img src="../Asset/Icon/Icon/Button.png" alt=""></button>
+                <button class="edit" data-category-id="${category.id}"><img src="../Asset/Icon/Icon/pen.png" alt=""></button>
             </td>
         `;
         return row;

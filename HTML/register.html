@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng ký</title>
     <link rel="stylesheet" href="../CSS/register.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="register">
@@ -14,31 +15,43 @@
             <p>Đăng ký tài khoản để sử dụng dịch vụ</p>
         </div>
         <br>
-        <form>
+        <form id="registrationForm">
             <div class="content">
                 <div class="surname">
-                    <label>Họ và tên đệm:</label>
-                    <input class="input1" type="text" id="">
+                    <label for="surname">Họ và tên đệm:</label>
+                    <input class="input1" type="text" id="surname" name="surname">
+                    <div class="error-message" id="surnameError">
+                    </div>
                 </div>
                 <div class="name">
-                    <label>Tên:</p>
-                    <input class="input1" type="text" id="">
+                    <label for="name">Tên:</label>
+                    <input class="input1" type="text" id="name" name="name">
+                    <div class="error-message" id="nameError">
+                    </div>
                 </div>
             </div>
-            <label>Email:</p>
-            <input class="input" type="email" id="" placeholder="you@company.com">
-            <br>
-            <br>
-            <label>Mật khẩu:</p>
-            <input class="input" type="password" id="">
+            <label for="email">Email:</label>
+            <input class="input" type="email" id="email" name="email" placeholder="you@company.com">
+            <div class="error-message" id="emailError">
+            </div>
+            <label for="password">Mật khẩu:</label>
+            <input class="input" type="password" id="password" name="password">
+            <div class="error-message" id="passwordError">
+            </div>
+            <label for="confirmPassword">Xác nhận mật khẩu:</label>
+            <input class="input" type="password" id="confirmPassword" name="confirmPassword">
+            <div class="error-message" id="confirmPasswordError">
+            </div>
             <div class="footer">
                 <label>
-                    <input type="checkbox" id=""> Bạn có đồng ý với
+                    <input type="checkbox" id="terms"> Bạn có đồng ý với
+                    <a href="">Chính sách và điều khoản</a>
                 </label>
-                <a href="">Chính sách và điều khoản</a>
+                <div class="error-message" id="termsError">
+                </div>
             </div>
             <br>
-            <button>Đăng ký</button>
+            <button type="submit">Đăng ký</button>
             <p class="question">Bạn đã có tài khoản?<a href="./login.html">Đăng nhập</a></p>
         </form>
     </div>
