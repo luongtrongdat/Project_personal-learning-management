@@ -1,34 +1,28 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Get DOM Elements
     let lessonTableBody = document.getElementById("lesson-table-body");
     let addLessonBtn = document.getElementById("add-lesson-btn");
     let addLessonModal = document.getElementById("add-lesson-modal");
-    let closeModalBtn = document.querySelector(".modal .close"); // More specific selector
+    let closeModalBtn = document.querySelector(".modal .close");
     let addLessonForm = document.getElementById("add-lesson-form");
-    let categoryFilterSelect = document.getElementById("category-filter"); // New category filter
-    let statusFilterSelect = document.getElementById("status-filter"); // Renamed for clarity
+    let categoryFilterSelect = document.getElementById("category-filter");
+    let statusFilterSelect = document.getElementById("status-filter"); 
     let paginationContainer = document.getElementById("pagination");
     let searchInput = document.getElementById("search-input");
     let searchIcon = document.getElementById("search-icon");
-    let lessonCategoryModalSelect = document.getElementById("lesson-category-modal"); // Modal category select
+    let lessonCategoryModalSelect = document.getElementById("lesson-category-modal"); 
+    let LESSONS_STORAGE_KEY = 'lessonsData';
+    let NEXT_ID_STORAGE_KEY = 'nextLessonId';
+    let CATEGORIES_STORAGE_KEY = 'categoriesData';
 
-    // --- LocalStorage Keys ---
-    const LESSONS_STORAGE_KEY = 'lessonsData';
-    const NEXT_ID_STORAGE_KEY = 'nextLessonId';
-    const CATEGORIES_STORAGE_KEY = 'categoriesData'; // Define category key
-
-    // --- State Variables ---
     let lessons = [];
     let categories = [];
     let nextLessonId = 1;
     let lessonsPerPage = 5;
     let currentPage = 1;
-    let currentCategoryFilter = "all"; // Track current category filter
-    let currentStatusFilter = "all";   // Track current status filter
-    let currentSearchTerm = "";      // Track current search term
-    let searchTimeout; // To debounce search input
-
-    // --- Data Loading and Saving ---
+    let currentCategoryFilter = "all";
+    let currentStatusFilter = "all"; 
+    let currentSearchTerm = ""; 
+    let searchTimeout; 
 
     function loadCategoriesFromStorage() {
         let storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
@@ -42,27 +36,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Error parsing categories from localStorage:", e);
             }
         }
-        // Fallback/Default categories if none in storage or error
         console.warn("No valid categories found in localStorage. Using default examples.");
-        const defaultCategories = [
+        let defaultCategories = [
             { id: 1, name: "HTML" },
             { id: 2, name: "CSS" },
             { id: 3, name: "JavaScript Basic" },
             { id: 4, name: "ReactJS" },
-            { id: 5, name: "JAVA" }, // Added Java to match default lessons
+            { id: 5, name: "JAVA" },
         ];
-        // Optionally save default categories back to localStorage
-        // saveCategoriesToStorage(defaultCategories);
         return defaultCategories;
     }
 
-    function saveCategoriesToStorage(categoriesToSave) {
-         try {
-            localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categoriesToSave));
-        } catch (e) {
-            console.error("Error saving categories to localStorage:", e);
-        }
-    }
+    // function saveCategoriesToStorage(categoriesToSave) {
+    //      try {
+    //         localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categoriesToSave));
+    //     } catch (e) {
+    //         console.error("Error saving categories to localStorage:", e);
+    //     }
+    // }
 
 
     function getLessonsFromStorage() {
@@ -82,7 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function getDefaultLessons() {
-        // Assign subject_id based on default categories if possible
         return [
             { id: 1, subject_id: 1, lesson_name: "Session 01: Tổng quan về HTML", time: 24, status: "complete" },
             { id: 2, subject_id: 1, lesson_name: "Session 02: Thẻ Inline và Block", time: 44, status: "incomplete" }, // HTML
@@ -123,13 +113,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // --- UI Rendering ---
 
     function createLessonRow(lesson) {
         let row = document.createElement("tr");
         row.dataset.lessonId = lesson.id;
 
-        // Checkbox and Lesson Name
         let cellName = row.insertCell();
         let checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -139,23 +127,19 @@ document.addEventListener("DOMContentLoaded", function () {
         cellName.appendChild(checkbox);
         cellName.appendChild(document.createTextNode(lesson.lesson_name));
 
-        // Category Name (Find from categories array)
         let cellCategory = row.insertCell();
         let category = categories.find(cat => cat.id === lesson.subject_id);
-        cellCategory.textContent = category ? category.name : 'N/A'; // Display category name or N/A
+        cellCategory.textContent = category ? category.name : 'N/A'; 
 
-        // Time
         let cellTime = row.insertCell();
-        cellTime.textContent = `${lesson.time} phút`; // Add unit
+        cellTime.textContent = `${lesson.time} phút`; 
 
-        // Status
         let cellStatus = row.insertCell();
         let statusSpan = document.createElement('span');
         statusSpan.classList.add(lesson.status === 'complete' ? 'active' : 'inactive');
         statusSpan.textContent = lesson.status === "complete" ? "● Hoàn thành" : "● Chưa hoàn thành";
         cellStatus.appendChild(statusSpan);
 
-        // Actions
         let cellActions = row.insertCell();
         cellActions.style.textAlign = 'center';
 
@@ -178,22 +162,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function renderTable() {
-        lessonTableBody.innerHTML = ""; // Clear existing rows
+        lessonTableBody.innerHTML = "";
 
-        // 1. Filter by category
         let filteredLessons = lessons;
         if (currentCategoryFilter !== "all") {
-            // Convert filter value to number for comparison
-            const categoryIdFilter = parseInt(currentCategoryFilter, 10);
+            let categoryIdFilter = parseInt(currentCategoryFilter, 10);
             filteredLessons = filteredLessons.filter(lesson => lesson.subject_id === categoryIdFilter);
         }
 
-        // 2. Filter by status (on the already category-filtered list)
         if (currentStatusFilter !== "all") {
             filteredLessons = filteredLessons.filter(lesson => lesson.status === currentStatusFilter);
         }
 
-        // 3. Filter by search term (on the already filtered list)
         if (currentSearchTerm) {
             let searchTermLower = currentSearchTerm.toLowerCase();
             filteredLessons = filteredLessons.filter(lesson =>
@@ -201,7 +181,6 @@ document.addEventListener("DOMContentLoaded", function () {
             );
         }
 
-        // 4. Paginate the final filtered results
         let totalFilteredLessons = filteredLessons.length;
         let totalPages = Math.ceil(totalFilteredLessons / lessonsPerPage);
 
@@ -215,22 +194,17 @@ document.addEventListener("DOMContentLoaded", function () {
         let endIndex = startIndex + lessonsPerPage;
         let lessonsToRender = filteredLessons.slice(startIndex, endIndex);
 
-        // 5. Render rows or "No data" message
         if (lessonsToRender.length > 0) {
-            // Update table header to include Category column
-            const thead = lessonTableBody.closest('table').querySelector('thead tr');
-            if (thead && thead.children.length === 4) { // Check if category header is missing
-                 const thCategory = document.createElement('th');
+            let thead = lessonTableBody.closest('table').querySelector('thead tr');
+            if (thead && thead.children.length === 4) { 
+                 let thCategory = document.createElement('th');
                  thCategory.textContent = 'Môn học';
-                 // Insert Category header before Time header
                  thead.insertBefore(thCategory, thead.children[1]);
 
-                 // Adjust arrow positions if needed (or remove absolute positioning from CSS)
-                 // This might require removing the arrow images or rethinking their placement
-                 const arrow1 = document.getElementById('arrow-down');
-                 const arrow2 = document.getElementById('arrow_down');
-                 if(arrow1) arrow1.style.left = '/* New position */'; // Adjust as needed
-                 if(arrow2) arrow2.style.left = '/* New position */'; // Adjust as needed
+                 let arrow1 = document.getElementById('arrow-down');
+                 let arrow2 = document.getElementById('arrow_down');
+                 if(arrow1) arrow1.style.left = '/* New position */'; 
+                 if(arrow2) arrow2.style.left = '/* New position */'; 
             }
 
 
@@ -239,17 +213,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 lessonTableBody.appendChild(row);
             });
         } else {
-             // Update table header even if no data (to maintain structure)
-             const thead = lessonTableBody.closest('table').querySelector('thead tr');
+             let thead = lessonTableBody.closest('table').querySelector('thead tr');
              if (thead && thead.children.length === 4) {
-                 const thCategory = document.createElement('th');
+                 let thCategory = document.createElement('th');
                  thCategory.textContent = 'Môn học';
                  thead.insertBefore(thCategory, thead.children[1]);
              }
 
             let noDataRow = lessonTableBody.insertRow();
             let cell = noDataRow.insertCell();
-            cell.colSpan = 5; // Span across 5 columns now
+            cell.colSpan = 5; 
             cell.textContent = "Không tìm thấy bài học phù hợp.";
             if (!currentSearchTerm && currentCategoryFilter === 'all' && currentStatusFilter === 'all' && lessons.length === 0) {
                  cell.textContent = "Chưa có bài học nào.";
@@ -259,7 +232,6 @@ document.addEventListener("DOMContentLoaded", function () {
             cell.style.color = "#666";
         }
 
-        // 6. Render pagination controls
         renderPagination(totalFilteredLessons);
     }
 
@@ -320,7 +292,6 @@ document.addEventListener("DOMContentLoaded", function () {
         paginationContainer.appendChild(createButton(currentPage + 1, '›', false, currentPage === totalPages));
     }
 
-    // --- Event Handlers ---
 
     function handleDeleteLesson(lessonId) {
         Swal.fire({
@@ -340,7 +311,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (lessonIndex !== -1) {
                     lessons.splice(lessonIndex, 1);
                     saveToStorage(lessons, nextLessonId);
-                    renderTable(); // Re-render handles pagination adjustment
+                    renderTable(); 
                     Swal.fire("Đã xóa!", "Bài học đã được xóa.", "success");
                 } else {
                     Swal.fire("Lỗi!", `Không tìm thấy bài học để xóa (ID: ${lessonId}).`, "error");
@@ -353,12 +324,11 @@ document.addEventListener("DOMContentLoaded", function () {
         addLessonForm.reset();
         addLessonModal.querySelector('h2').textContent = title;
         addLessonModal.querySelector('button[type="submit"]').textContent = buttonText;
-        populateCategorySelects(lessonCategoryModalSelect); // Ensure modal select is populated
+        populateCategorySelects(lessonCategoryModalSelect); 
 
         if (lessonData) {
             document.getElementById("lesson-name").value = lessonData.lesson_name;
             document.getElementById("lesson-duration").value = lessonData.time;
-            // Use the correct ID for the modal select
             lessonCategoryModalSelect.value = lessonData.subject_id || "";
             addLessonForm.dataset.editingId = lessonData.id;
         } else {
@@ -392,23 +362,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
         let lessonNameInput = document.getElementById("lesson-name");
         let lessonName = lessonNameInput.value.trim();
-        // Use the correct ID for the modal select
         let lessonCategoryValue = lessonCategoryModalSelect.value;
         let lessonDurationInput = document.getElementById("lesson-duration");
         let lessonDuration = parseInt(lessonDurationInput.value, 10);
 
         let editingId = addLessonForm.dataset.editingId ? parseInt(addLessonForm.dataset.editingId, 10) : null;
 
-        // Validation
         if (!lessonName) {
             Swal.fire("Thiếu thông tin", "Vui lòng nhập tên bài học.", "warning").then(() => lessonNameInput.focus());
             return;
         }
-        if (!lessonCategoryValue) { // Check if a category is selected
+        if (!lessonCategoryValue) { 
              Swal.fire("Thiếu thông tin", "Vui lòng chọn môn học.", "warning").then(() => lessonCategoryModalSelect.focus());
              return;
         }
-        let lessonCategoryId = parseInt(lessonCategoryValue, 10); // Convert selected value to number
+        let lessonCategoryId = parseInt(lessonCategoryValue, 10); 
 
         if (isNaN(lessonDuration) || lessonDuration <= 0) {
             Swal.fire("Dữ liệu không hợp lệ", "Thời gian học phải là một số dương.", "warning").then(() => lessonDurationInput.focus());
@@ -426,13 +394,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (editingId !== null) {
-            // Update Existing Lesson
             let lessonIndex = lessons.findIndex(lesson => lesson.id === editingId);
             if (lessonIndex !== -1) {
                 lessons[lessonIndex].lesson_name = lessonName;
                 lessons[lessonIndex].time = lessonDuration;
-                lessons[lessonIndex].subject_id = lessonCategoryId; // Assign the parsed category ID
-                // Status is not changed here
+                lessons[lessonIndex].subject_id = lessonCategoryId;
 
                 saveToStorage(lessons, nextLessonId);
                 renderTable();
@@ -442,13 +408,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 Swal.fire("Lỗi", "Không tìm thấy bài học để cập nhật.", "error");
             }
         } else {
-            // Add New Lesson
             let newLesson = {
                 id: nextLessonId,
-                subject_id: lessonCategoryId, // Assign the parsed category ID
+                subject_id: lessonCategoryId, 
                 lesson_name: lessonName,
                 time: lessonDuration,
-                status: "incomplete", // Default status
+                status: "incomplete", 
             };
 
             lessons.push(newLesson);
@@ -456,15 +421,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
             saveToStorage(lessons, nextLessonId);
 
-            // Go to the page where the new item will be, considering current filters
-            currentCategoryFilter = "all"; // Optionally reset filters after adding
+            currentCategoryFilter = "all"; 
             currentStatusFilter = "all";
             currentSearchTerm = "";
             categoryFilterSelect.value = "all";
             statusFilterSelect.value = "all";
             searchInput.value = "";
 
-            // Calculate page based on *all* items since we reset filters
             currentPage = Math.ceil(lessons.length / lessonsPerPage);
 
             renderTable();
@@ -511,24 +474,18 @@ document.addEventListener("DOMContentLoaded", function () {
             cancelButtonText: 'Hủy'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Optional: Clear specific storage items on logout
-                // localStorage.removeItem(LESSONS_STORAGE_KEY);
-                // localStorage.removeItem(NEXT_ID_STORAGE_KEY);
-                // localStorage.removeItem(CATEGORIES_STORAGE_KEY);
-                window.location.href = './login.html'; // Redirect
+                window.location.href = './login.html'; 
             }
         });
     }
 
-    // --- Initialization ---
 
     function populateCategorySelects(selectElement, addAllOption = false) {
         if (!selectElement) return;
 
-        // Store current value if editing/filtering
-        const currentValue = selectElement.value;
+        let currentValue = selectElement.value;
 
-        selectElement.innerHTML = ''; // Clear existing options
+        selectElement.innerHTML = ''; 
 
         if (addAllOption) {
             let allOption = document.createElement('option');
@@ -536,12 +493,11 @@ document.addEventListener("DOMContentLoaded", function () {
             allOption.textContent = "Tất cả môn học";
             selectElement.appendChild(allOption);
         } else {
-             // Add default prompt for modal select
              let defaultOption = document.createElement('option');
-             defaultOption.value = ""; // Empty value for prompt
+             defaultOption.value = ""; 
              defaultOption.textContent = "-- Chọn môn học --";
-             defaultOption.disabled = true; // Optional: disable it
-             defaultOption.selected = true; // Select it by default
+             defaultOption.disabled = true; 
+             defaultOption.selected = true; 
              selectElement.appendChild(defaultOption);
         }
 
@@ -553,40 +509,32 @@ document.addEventListener("DOMContentLoaded", function () {
             selectElement.appendChild(option);
         });
 
-        // Restore previously selected value if it exists
         if (currentValue && selectElement.querySelector(`option[value="${currentValue}"]`)) {
              selectElement.value = currentValue;
         } else if (!addAllOption && !currentValue) {
-             // Ensure the prompt is selected if no value was previously set in modal
              selectElement.value = "";
         } else if (addAllOption && !currentValue) {
-             selectElement.value = "all"; // Default to 'all' for filter dropdown
+             selectElement.value = "all"; 
         }
     }
 
     function initializeApp() {
-        // Load data
         categories = loadCategoriesFromStorage();
         lessons = getLessonsFromStorage();
         nextLessonId = getNextIdFromStorage(lessons);
 
-        // Save initial default data if storage was empty
         if (!localStorage.getItem(LESSONS_STORAGE_KEY)) {
             saveToStorage(lessons, nextLessonId);
         }
          if (!localStorage.getItem(CATEGORIES_STORAGE_KEY)) {
-             // Only save default categories if they were loaded because storage was empty
-             // saveCategoriesToStorage(categories); // Uncomment if you want to save defaults
+             
          }
 
+        populateCategorySelects(categoryFilterSelect, true); 
+        populateCategorySelects(lessonCategoryModalSelect, false); 
+        categoryFilterSelect.value = currentCategoryFilter; 
+        statusFilterSelect.value = currentStatusFilter;  
 
-        // Populate UI elements
-        populateCategorySelects(categoryFilterSelect, true); // Populate filter dropdown
-        populateCategorySelects(lessonCategoryModalSelect, false); // Populate modal dropdown
-        categoryFilterSelect.value = currentCategoryFilter; // Set initial filter value
-        statusFilterSelect.value = currentStatusFilter;   // Set initial status filter value
-
-        // Add Event Listeners using event delegation where possible
         lessonTableBody.addEventListener('click', function(event) {
             let target = event.target;
             let deleteButton = target.closest('button.delete');
@@ -608,8 +556,8 @@ document.addEventListener("DOMContentLoaded", function () {
             if (event.key === 'Escape' && addLessonModal.style.display === 'block') closeModalHandler();
         });
         addLessonForm.addEventListener("submit", handleFormSubmit);
-        categoryFilterSelect.addEventListener("change", handleCategoryFilterChange); // Listener for category filter
-        statusFilterSelect.addEventListener("change", handleStatusFilterChange);     // Listener for status filter
+        categoryFilterSelect.addEventListener("change", handleCategoryFilterChange);
+        statusFilterSelect.addEventListener("change", handleStatusFilterChange);  
         searchInput.addEventListener("keyup", handleSearchInput);
         searchIcon.addEventListener("click", performSearch);
 
@@ -620,11 +568,9 @@ document.addEventListener("DOMContentLoaded", function () {
             console.warn("Logout button ('user-logout-btn') not found.");
         }
 
-        // Initial Render
         renderTable();
     }
 
-    // Start the application
     initializeApp();
 
-}); // End DOMContentLoaded
+});
