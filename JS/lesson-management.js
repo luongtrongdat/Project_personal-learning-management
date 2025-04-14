@@ -1,32 +1,78 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // ... (Giữ nguyên các phần khai báo biến và hàm khác) ...
-
+    // Get DOM Elements
     let lessonTableBody = document.getElementById("lesson-table-body");
     let addLessonBtn = document.getElementById("add-lesson-btn");
     let addLessonModal = document.getElementById("add-lesson-modal");
-    let closeModal = document.querySelector(".close");
+    let closeModalBtn = document.querySelector(".modal .close"); // More specific selector
     let addLessonForm = document.getElementById("add-lesson-form");
-    let statusFilter = document.getElementById("status-filter");
+    let categoryFilterSelect = document.getElementById("category-filter"); // New category filter
+    let statusFilterSelect = document.getElementById("status-filter"); // Renamed for clarity
     let paginationContainer = document.getElementById("pagination");
     let searchInput = document.getElementById("search-input");
     let searchIcon = document.getElementById("search-icon");
+    let lessonCategoryModalSelect = document.getElementById("lesson-category-modal"); // Modal category select
 
-    // --- LocalStorage Integration ---
-    let LESSONS_STORAGE_KEY = 'lessonsData';
-    let NEXT_ID_STORAGE_KEY = 'nextLessonId';
+    // --- LocalStorage Keys ---
+    const LESSONS_STORAGE_KEY = 'lessonsData';
+    const NEXT_ID_STORAGE_KEY = 'nextLessonId';
+    const CATEGORIES_STORAGE_KEY = 'categoriesData'; // Define category key
 
-    // Function to get lessons from localStorage or use default
+    // --- State Variables ---
+    let lessons = [];
+    let categories = [];
+    let nextLessonId = 1;
+    let lessonsPerPage = 5;
+    let currentPage = 1;
+    let currentCategoryFilter = "all"; // Track current category filter
+    let currentStatusFilter = "all";   // Track current status filter
+    let currentSearchTerm = "";      // Track current search term
+    let searchTimeout; // To debounce search input
+
+    // --- Data Loading and Saving ---
+
+    function loadCategoriesFromStorage() {
+        let storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+        if (storedCategories) {
+            try {
+                let parsed = JSON.parse(storedCategories);
+                if (Array.isArray(parsed)) {
+                    return parsed;
+                }
+            } catch (e) {
+                console.error("Error parsing categories from localStorage:", e);
+            }
+        }
+        // Fallback/Default categories if none in storage or error
+        console.warn("No valid categories found in localStorage. Using default examples.");
+        const defaultCategories = [
+            { id: 1, name: "HTML" },
+            { id: 2, name: "CSS" },
+            { id: 3, name: "JavaScript Basic" },
+            { id: 4, name: "ReactJS" },
+            { id: 5, name: "JAVA" }, // Added Java to match default lessons
+        ];
+        // Optionally save default categories back to localStorage
+        // saveCategoriesToStorage(defaultCategories);
+        return defaultCategories;
+    }
+
+    function saveCategoriesToStorage(categoriesToSave) {
+         try {
+            localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categoriesToSave));
+        } catch (e) {
+            console.error("Error saving categories to localStorage:", e);
+        }
+    }
+
+
     function getLessonsFromStorage() {
         let storedLessons = localStorage.getItem(LESSONS_STORAGE_KEY);
         if (storedLessons) {
             try {
-                // Thêm try-catch để xử lý trường hợp JSON không hợp lệ
                 let parsedLessons = JSON.parse(storedLessons);
-                // Đảm bảo trả về một mảng
                 return Array.isArray(parsedLessons) ? parsedLessons : getDefaultLessons();
             } catch (e) {
                 console.error("Error parsing lessons from localStorage:", e);
-                // Nếu lỗi parse, trả về dữ liệu mặc định và xóa dữ liệu lỗi
                 localStorage.removeItem(LESSONS_STORAGE_KEY);
                 return getDefaultLessons();
             }
@@ -35,43 +81,38 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Function to provide default lessons
     function getDefaultLessons() {
+        // Assign subject_id based on default categories if possible
         return [
             { id: 1, subject_id: 1, lesson_name: "Session 01: Tổng quan về HTML", time: 24, status: "complete" },
-            { id: 2, subject_id: 2, lesson_name: "Session 02: Thẻ Inline và Block", time: 44, status: "incomplete" },
-            { id: 3, subject_id: 3, lesson_name: "Session 03: Thẻ hình ảnh", time: 24, status: "complete" },
-            { id: 4, subject_id: 4, lesson_name: "Session 05: Thẻ Semantic", time: 44, status: "incomplete" },
-            { id: 5, subject_id: 5, lesson_name: "Session 01: Tổng quan về CSS", time: 24, status: "complete" },
-            { id: 6, subject_id: 6, lesson_name: "Session 02: Nhúng CSS vào trang Web", time: 44, status: "incomplete" },
-            { id: 7, subject_id: 7, lesson_name: "Session 03: Position", time: 24, status: "complete" },
-            { id: 8, subject_id: 8, lesson_name: "Session 05: Flexbox", time: 44, status: "incomplete" },
-            { id: 9, subject_id: 9, lesson_name: "Session 01: Tổng quan về JAVASCRIPT", time: 24, status: "complete" },
-            { id: 10, subject_id: 10, lesson_name: "Session 02: Khai báo biến", time: 44, status: "incomplete" },
-            { id: 11, subject_id: 11, lesson_name: "Session 03: Câu lệnh điều kiện", time: 24, status: "complete" },
-            { id: 12, subject_id: 12, lesson_name: "Session 05: Vòng lặp", time: 44, status: "incomplete" },
-            { id: 13, subject_id: 13, lesson_name: "Session 01: Tổng quan về JAVA", time: 24, status: "complete" },
-            { id: 14, subject_id: 14, lesson_name: "Session 02: Mảng", time: 44, status: "incomplete" },
-            { id: 15, subject_id: 15, lesson_name: "Session 03: Animation", time: 24, status: "complete" },
+            { id: 2, subject_id: 1, lesson_name: "Session 02: Thẻ Inline và Block", time: 44, status: "incomplete" }, // HTML
+            { id: 3, subject_id: 1, lesson_name: "Session 03: Thẻ hình ảnh", time: 24, status: "complete" }, // HTML
+            { id: 4, subject_id: 1, lesson_name: "Session 05: Thẻ Semantic", time: 44, status: "incomplete" }, // HTML
+            { id: 5, subject_id: 2, lesson_name: "Session 01: Tổng quan về CSS", time: 24, status: "complete" },
+            { id: 6, subject_id: 2, lesson_name: "Session 02: Nhúng CSS vào trang Web", time: 44, status: "incomplete" }, // CSS
+            { id: 7, subject_id: 2, lesson_name: "Session 03: Position", time: 24, status: "complete" }, // CSS
+            { id: 8, subject_id: 2, lesson_name: "Session 05: Flexbox", time: 44, status: "incomplete" }, // CSS
+            { id: 9, subject_id: 3, lesson_name: "Session 01: Tổng quan về JAVASCRIPT", time: 24, status: "complete" },
+            { id: 10, subject_id: 3, lesson_name: "Session 02: Khai báo biến", time: 44, status: "incomplete" }, // JS
+            { id: 11, subject_id: 3, lesson_name: "Session 03: Câu lệnh điều kiện", time: 24, status: "complete" }, // JS
+            { id: 12, subject_id: 3, lesson_name: "Session 05: Vòng lặp", time: 44, status: "incomplete" }, // JS
+            { id: 13, subject_id: 5, lesson_name: "Session 01: Tổng quan về JAVA", time: 24, status: "complete" }, // JAVA
+            { id: 14, subject_id: 5, lesson_name: "Session 02: Mảng", time: 44, status: "incomplete" }, // JAVA
+            { id: 15, subject_id: 2, lesson_name: "Session 03: Animation", time: 24, status: "complete" }, // CSS (Example)
         ];
     }
 
-
-    // Function to get the next ID from localStorage or calculate it
     function getNextIdFromStorage(currentLessons) {
         let storedNextId = localStorage.getItem(NEXT_ID_STORAGE_KEY);
         if (storedNextId) {
             let nextId = parseInt(storedNextId, 10);
-            // Đảm bảo nextId luôn lớn hơn ID lớn nhất hiện có
             let maxId = currentLessons.length > 0 ? Math.max(...currentLessons.map(l => l.id)) : 0;
             return Math.max(nextId, maxId + 1);
         } else {
-            // Calculate next ID based on current lessons if not stored
             return currentLessons.length > 0 ? Math.max(...currentLessons.map(l => l.id)) + 1 : 1;
         }
     }
 
-    // Function to save lessons and next ID to localStorage
     function saveToStorage(lessonsToSave, nextIdToSave) {
         try {
             localStorage.setItem(LESSONS_STORAGE_KEY, JSON.stringify(lessonsToSave));
@@ -82,24 +123,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    let lessons = getLessonsFromStorage();
-    let nextLessonId = getNextIdFromStorage(lessons);
-    // Save initial data if it wasn't already in storage
-    if (!localStorage.getItem(LESSONS_STORAGE_KEY)) {
-        saveToStorage(lessons, nextLessonId);
-    }
+    // --- UI Rendering ---
 
-    // --- End LocalStorage Integration ---
-
-    let lessonsPerPage = 5;
-    let currentPage = 1;
-    let currentFilter = "all"; // Track current filter
-    let currentSearchTerm = ""; // Track current search term
-
-    // --- Helper Function for Creating Table Rows ---
     function createLessonRow(lesson) {
         let row = document.createElement("tr");
-        row.dataset.lessonId = lesson.id; // Thêm ID vào row để dễ truy cập sau này
+        row.dataset.lessonId = lesson.id;
 
         // Checkbox and Lesson Name
         let cellName = row.insertCell();
@@ -107,13 +135,18 @@ document.addEventListener("DOMContentLoaded", function () {
         checkbox.type = 'checkbox';
         checkbox.name = 'lesson-select';
         checkbox.value = lesson.id;
-        checkbox.style.marginRight = '8px'; // Thêm khoảng cách
+        checkbox.style.marginRight = '8px';
         cellName.appendChild(checkbox);
         cellName.appendChild(document.createTextNode(lesson.lesson_name));
 
+        // Category Name (Find from categories array)
+        let cellCategory = row.insertCell();
+        let category = categories.find(cat => cat.id === lesson.subject_id);
+        cellCategory.textContent = category ? category.name : 'N/A'; // Display category name or N/A
+
         // Time
         let cellTime = row.insertCell();
-        cellTime.textContent = `${lesson.time}`;
+        cellTime.textContent = `${lesson.time} phút`; // Add unit
 
         // Status
         let cellStatus = row.insertCell();
@@ -124,19 +157,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Actions
         let cellActions = row.insertCell();
-        cellActions.style.textAlign = 'center'; // Căn giữa nút
+        cellActions.style.textAlign = 'center';
 
         let deleteButton = document.createElement('button');
         deleteButton.classList.add('delete');
         deleteButton.dataset.lessonId = lesson.id;
         deleteButton.innerHTML = '<img src="../Asset/Icon/Icon/Button.png" alt="Delete">';
-        deleteButton.title = "Xóa bài học"; // Thêm tooltip
+        deleteButton.title = "Xóa bài học";
 
         let editButton = document.createElement('button');
         editButton.classList.add('edit');
         editButton.dataset.lessonId = lesson.id;
         editButton.innerHTML = '<img src="../Asset/Icon/Icon/pen.png" alt="Edit">';
-        editButton.title = "Sửa bài học"; // Thêm tooltip
+        editButton.title = "Sửa bài học";
 
         cellActions.appendChild(deleteButton);
         cellActions.appendChild(editButton);
@@ -144,18 +177,23 @@ document.addEventListener("DOMContentLoaded", function () {
         return row;
     }
 
-
-    // Refactored render function to handle filtering and searching
     function renderTable() {
         lessonTableBody.innerHTML = ""; // Clear existing rows
 
-        // 1. Filter by status
+        // 1. Filter by category
         let filteredLessons = lessons;
-        if (currentFilter !== "all") {
-            filteredLessons = lessons.filter(lesson => lesson.status === currentFilter);
+        if (currentCategoryFilter !== "all") {
+            // Convert filter value to number for comparison
+            const categoryIdFilter = parseInt(currentCategoryFilter, 10);
+            filteredLessons = filteredLessons.filter(lesson => lesson.subject_id === categoryIdFilter);
         }
 
-        // 2. Filter by search term (case-insensitive)
+        // 2. Filter by status (on the already category-filtered list)
+        if (currentStatusFilter !== "all") {
+            filteredLessons = filteredLessons.filter(lesson => lesson.status === currentStatusFilter);
+        }
+
+        // 3. Filter by search term (on the already filtered list)
         if (currentSearchTerm) {
             let searchTermLower = currentSearchTerm.toLowerCase();
             filteredLessons = filteredLessons.filter(lesson =>
@@ -163,303 +201,81 @@ document.addEventListener("DOMContentLoaded", function () {
             );
         }
 
-        // 3. Paginate the filtered/searched results
+        // 4. Paginate the final filtered results
         let totalFilteredLessons = filteredLessons.length;
         let totalPages = Math.ceil(totalFilteredLessons / lessonsPerPage);
 
-        // Adjust currentPage if it's out of bounds after filtering/deleting
         if (currentPage > totalPages && totalPages > 0) {
             currentPage = totalPages;
         } else if (totalPages === 0) {
-            currentPage = 1; // Reset to page 1 if no items
+            currentPage = 1;
         }
 
         let startIndex = (currentPage - 1) * lessonsPerPage;
         let endIndex = startIndex + lessonsPerPage;
         let lessonsToRender = filteredLessons.slice(startIndex, endIndex);
 
-        // 4. Render rows or "No data" message
+        // 5. Render rows or "No data" message
         if (lessonsToRender.length > 0) {
+            // Update table header to include Category column
+            const thead = lessonTableBody.closest('table').querySelector('thead tr');
+            if (thead && thead.children.length === 4) { // Check if category header is missing
+                 const thCategory = document.createElement('th');
+                 thCategory.textContent = 'Môn học';
+                 // Insert Category header before Time header
+                 thead.insertBefore(thCategory, thead.children[1]);
+
+                 // Adjust arrow positions if needed (or remove absolute positioning from CSS)
+                 // This might require removing the arrow images or rethinking their placement
+                 const arrow1 = document.getElementById('arrow-down');
+                 const arrow2 = document.getElementById('arrow_down');
+                 if(arrow1) arrow1.style.left = '/* New position */'; // Adjust as needed
+                 if(arrow2) arrow2.style.left = '/* New position */'; // Adjust as needed
+            }
+
+
             lessonsToRender.forEach(lesson => {
                 let row = createLessonRow(lesson);
                 lessonTableBody.appendChild(row);
             });
         } else {
-            // Display a message if no lessons match filters/search or if lessons array is empty
+             // Update table header even if no data (to maintain structure)
+             const thead = lessonTableBody.closest('table').querySelector('thead tr');
+             if (thead && thead.children.length === 4) {
+                 const thCategory = document.createElement('th');
+                 thCategory.textContent = 'Môn học';
+                 thead.insertBefore(thCategory, thead.children[1]);
+             }
+
             let noDataRow = lessonTableBody.insertRow();
             let cell = noDataRow.insertCell();
-            cell.colSpan = 4; // Span across all columns
-            cell.textContent = currentSearchTerm || currentFilter !== 'all' ? "Không tìm thấy bài học phù hợp." : "Chưa có bài học nào.";
+            cell.colSpan = 5; // Span across 5 columns now
+            cell.textContent = "Không tìm thấy bài học phù hợp.";
+            if (!currentSearchTerm && currentCategoryFilter === 'all' && currentStatusFilter === 'all' && lessons.length === 0) {
+                 cell.textContent = "Chưa có bài học nào.";
+            }
             cell.style.textAlign = "center";
             cell.style.padding = "20px";
             cell.style.color = "#666";
         }
 
-
-        // 5. Add event listeners for delete/edit buttons (using event delegation is better)
-        // Removed addTableActionListeners() call here, will use delegation below
-
-        // 6. Render pagination controls based on filtered/searched results
+        // 6. Render pagination controls
         renderPagination(totalFilteredLessons);
     }
 
-    // --- Event Delegation for Table Actions ---
-    // Instead of adding listeners to each button, listen on the table body
-    lessonTableBody.addEventListener('click', function(event) {
-        let target = event.target;
-        let deleteButton = target.closest('button.delete');
-        let editButton = target.closest('button.edit');
-
-        if (deleteButton) {
-            let lessonId = deleteButton.dataset.lessonId;
-            deleteLesson(lessonId);
-        } else if (editButton) {
-            let lessonId = editButton.dataset.lessonId;
-            openEditModal(lessonId); // Call function to handle editing
-        }
-    });
-
-
-    // --- Delete Lesson Function ---
-    function deleteLesson(lessonId) {
-        Swal.fire({
-            title: "Bạn có chắc chắn muốn xóa?",
-            text: "Bạn sẽ không thể hoàn tác hành động này!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33", // Red for delete
-            cancelButtonColor: "#3085d6",
-            confirmButtonText: "Xóa!",
-            cancelButtonText: "Hủy"
-        }).then((result) => {
-            if (result.isConfirmed) {
-                let lessonIdNum = parseInt(lessonId, 10); // Ensure ID is a number
-                let lessonIndex = lessons.findIndex(lesson => lesson.id === lessonIdNum);
-
-                if (lessonIndex !== -1) {
-                    lessons.splice(lessonIndex, 1);
-                    saveToStorage(lessons, nextLessonId); // Save changes
-                    renderTable(); // Re-render the table (handles pagination adjustment)
-                    Swal.fire(
-                        "Đã xóa!",
-                        "Bài học đã được xóa.",
-                        "success"
-                    );
-                } else {
-                     Swal.fire(
-                        "Lỗi!",
-                        "Không tìm thấy bài học để xóa (ID: " + lessonId + ").",
-                        "error"
-                    );
-                }
-            }
-        });
-    }
-
-    // --- Modal Handling ---
-    function openModal(title, buttonText, lessonData = null) {
-        addLessonForm.reset(); // Reset form fields
-        addLessonModal.querySelector('h2').textContent = title;
-        addLessonModal.querySelector('button[type="submit"]').textContent = buttonText;
-
-        if (lessonData) {
-            // Populate form for editing
-            document.getElementById("lesson-name").value = lessonData.lesson_name;
-            document.getElementById("lesson-duration").value = lessonData.time;
-            let categorySelect = document.querySelector("#add-lesson-form select[name='lesson-category']");
-            categorySelect.value = lessonData.subject_id || ""; // Set selected category or default
-            // Store the ID of the lesson being edited
-            addLessonForm.dataset.editingId = lessonData.id;
-        } else {
-            // Clear editing ID for adding
-            addLessonForm.removeAttribute('data-editing-id');
-        }
-
-        addLessonModal.style.display = "block";
-    }
-
-    function closeModalHandler() {
-        addLessonModal.style.display = "none";
-        addLessonForm.removeAttribute('data-editing-id'); // Ensure editing ID is cleared on close
-    }
-
-    // Show the modal for ADDING when the "Add Lesson" button is clicked
-    addLessonBtn.addEventListener("click", () => {
-        openModal("Thêm mới bài học", "Thêm");
-    });
-
-    // Function to open modal for EDITING
-    function openEditModal(lessonId) {
-        let lessonIdNum = parseInt(lessonId, 10);
-        let lessonToEdit = lessons.find(lesson => lesson.id === lessonIdNum);
-        if (lessonToEdit) {
-            openModal("Chỉnh sửa bài học", "Lưu thay đổi", lessonToEdit);
-        } else {
-            Swal.fire("Lỗi", "Không tìm thấy bài học để sửa.", "error");
-        }
-    }
-
-
-    // Close the modal listeners
-    closeModal.addEventListener("click", closeModalHandler);
-    window.addEventListener("click", (event) => {
-        if (event.target == addLessonModal) {
-            closeModalHandler();
-        }
-    });
-    // Close modal on ESC key press
-    window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && addLessonModal.style.display === 'block') {
-            closeModalHandler();
-        }
-    });
-
-
-    // --- Form Submission (Handles BOTH Add and Edit) ---
-    addLessonForm.addEventListener("submit", (event) => {
-        event.preventDefault(); // Prevent default form submission
-
-        // Get form values
-        let lessonNameInput = document.getElementById("lesson-name");
-        let lessonName = lessonNameInput.value.trim();
-        let lessonCategorySelect = document.querySelector("#add-lesson-form select[name='lesson-category']");
-        let lessonCategoryId = lessonCategorySelect ? lessonCategorySelect.value : null;
-        let lessonDurationInput = document.getElementById("lesson-duration");
-        let lessonDuration = parseInt(lessonDurationInput.value, 10); // Always specify radix
-
-        let editingId = addLessonForm.dataset.editingId ? parseInt(addLessonForm.dataset.editingId, 10) : null;
-
-        // --- Validation ---
-        if (!lessonName) {
-             Swal.fire("Thiếu thông tin", "Vui lòng nhập tên bài học.", "warning");
-             lessonNameInput.focus();
-             return;
-        }
-         if (isNaN(lessonDuration) || lessonDuration <= 0) {
-             Swal.fire("Dữ liệu không hợp lệ", "Thời gian học phải là một số dương.", "warning");
-             lessonDurationInput.focus();
-             return;
-         }
-         // Add validation for category if it's required
-         // if (!lessonCategoryId) {
-         //     Swal.fire("Thiếu thông tin", "Vui lòng chọn môn học.", "warning");
-         //     lessonCategorySelect.focus();
-         //     return;
-         // }
-
-        // --- Duplicate Name Validation (Improved for Edit) ---
-        let lessonNameLower = lessonName.toLowerCase();
-        let isDuplicate = lessons.some(lesson =>
-            lesson.lesson_name.toLowerCase() === lessonNameLower && lesson.id !== editingId // Exclude the lesson being edited
-        );
-
-        if (isDuplicate) {
-            Swal.fire("Trùng lặp", "Tên bài học này đã tồn tại. Vui lòng nhập tên khác.", "error");
-            lessonNameInput.focus();
-            return; // Stop processing
-        }
-        // --- End Validation ---
-
-
-        if (editingId !== null) {
-            // --- Update Existing Lesson ---
-            let lessonIndex = lessons.findIndex(lesson => lesson.id === editingId);
-            if (lessonIndex !== -1) {
-                // Update lesson properties (keep original status unless changed elsewhere)
-                lessons[lessonIndex].lesson_name = lessonName;
-                lessons[lessonIndex].time = lessonDuration;
-                lessons[lessonIndex].subject_id = lessonCategoryId ? parseInt(lessonCategoryId) : null;
-                // Note: Status is not updated via this form in the current setup
-
-                saveToStorage(lessons, nextLessonId); // Save changes
-                renderTable(); // Re-render
-                closeModalHandler(); // Close modal
-                Swal.fire("Thành công!", "Đã cập nhật bài học.", "success");
-            } else {
-                Swal.fire("Lỗi", "Không tìm thấy bài học để cập nhật.", "error");
-            }
-
-        } else {
-            // --- Add New Lesson ---
-            let newLesson = {
-                id: nextLessonId,
-                subject_id: lessonCategoryId ? parseInt(lessonCategoryId) : null,
-                lesson_name: lessonName,
-                time: lessonDuration,
-                status: "incomplete", // Default status for new lessons
-            };
-
-            lessons.push(newLesson);
-            nextLessonId++; // Increment ID for the *next* add
-
-            saveToStorage(lessons, nextLessonId); // Save new lesson and updated next ID
-
-            // Reset filters/search and go to the page with the new lesson
-            currentFilter = "all";
-            statusFilter.value = "all";
-            currentSearchTerm = "";
-            searchInput.value = "";
-            // Calculate the page where the new item will be
-            let totalFiltered = lessons.filter(l => currentFilter === 'all' || l.status === currentFilter)
-                                        .filter(l => !currentSearchTerm || l.lesson_name.toLowerCase().includes(currentSearchTerm.toLowerCase()))
-                                        .length;
-            currentPage = Math.ceil(totalFiltered / lessonsPerPage);
-
-
-            renderTable(); // Re-render
-            closeModalHandler(); // Close modal
-            Swal.fire("Thành công!", "Đã thêm bài học mới.", "success");
-        }
-    });
-
-
-    // --- Filtering ---
-    statusFilter.addEventListener("change", () => {
-        currentFilter = statusFilter.value;
-        currentPage = 1; // Reset to first page when filter changes
-        renderTable();
-    });
-
-    // --- Searching ---
-    let searchTimeout; // To debounce search input
-    function performSearch() {
-        currentSearchTerm = searchInput.value.trim();
-        currentPage = 1; // Reset to first page
-        renderTable();
-    }
-
-    searchInput.addEventListener("keyup", function(event) {
-        clearTimeout(searchTimeout); // Clear previous timeout
-        if (event.key === "Enter") {
-            performSearch(); // Search immediately on Enter
-        } else {
-            // Debounce: Wait 300ms after user stops typing before searching
-            searchTimeout = setTimeout(performSearch, 300);
-        }
-    });
-
-    searchIcon.addEventListener("click", performSearch); // Trigger search on icon click
-
-
-    // --- Pagination ---
     function renderPagination(totalItems) {
-        paginationContainer.innerHTML = ""; // Clear existing buttons
+        paginationContainer.innerHTML = "";
         let totalPages = Math.ceil(totalItems / lessonsPerPage);
 
-        if (totalPages <= 1) {
-            return; // No pagination needed
-        }
+        if (totalPages <= 1) return;
 
-        // Function to create a pagination button
         let createButton = (pageNumber, text = pageNumber, isActive = false, isDisabled = false) => {
             let button = document.createElement("button");
             button.textContent = text;
             button.disabled = isDisabled;
-            if (isActive) {
-                button.classList.add("active");
-            }
+            if (isActive) button.classList.add("active");
             if (!isDisabled) {
-                 button.addEventListener("click", () => {
+                button.addEventListener("click", () => {
                     currentPage = pageNumber;
                     renderTable();
                 });
@@ -467,20 +283,15 @@ document.addEventListener("DOMContentLoaded", function () {
             return button;
         };
 
-        // Previous Button
         paginationContainer.appendChild(createButton(currentPage - 1, '‹', false, currentPage === 1));
 
-
-        // Page Number Buttons (simplified logic for many pages)
-        let maxVisibleButtons = 5; // Max number buttons shown (excluding prev/next)
+        let maxVisibleButtons = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisibleButtons / 2));
         let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
 
-        // Adjust startPage if endPage reaches the limit first
-         if (endPage === totalPages) {
+        if (endPage === totalPages) {
             startPage = Math.max(1, totalPages - maxVisibleButtons + 1);
         }
-
 
         if (startPage > 1) {
             paginationContainer.appendChild(createButton(1));
@@ -496,8 +307,8 @@ document.addEventListener("DOMContentLoaded", function () {
             paginationContainer.appendChild(createButton(i, i, i === currentPage));
         }
 
-         if (endPage < totalPages) {
-             if (endPage < totalPages - 1) {
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
                 let ellipsis = document.createElement('span');
                 ellipsis.textContent = '...';
                 ellipsis.style.margin = '0 5px';
@@ -506,106 +317,314 @@ document.addEventListener("DOMContentLoaded", function () {
             paginationContainer.appendChild(createButton(totalPages));
         }
 
-
-        // Next Button
         paginationContainer.appendChild(createButton(currentPage + 1, '›', false, currentPage === totalPages));
     }
 
+    // --- Event Handlers ---
 
-    // --- Logout Button ---
-    let userLogoutBtn = document.getElementById('user-logout-btn');
-    if (userLogoutBtn) {
-        userLogoutBtn.addEventListener('click', () => {
-            Swal.fire({
-                title: 'Bạn có chắc chắn muốn đăng xuất?',
-                text: "Dữ liệu bài học hiện tại sẽ vẫn được lưu trong trình duyệt này.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Đăng xuất',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Optional: Clear app-specific localStorage on logout if desired
-                    // localStorage.removeItem(LESSONS_STORAGE_KEY);
-                    // localStorage.removeItem(NEXT_ID_STORAGE_KEY);
-                    // localStorage.removeItem('categoriesData'); // Example if you store categories
-                    window.location.href = './login.html'; // Redirect
+    function handleDeleteLesson(lessonId) {
+        Swal.fire({
+            title: "Bạn có chắc chắn muốn xóa?",
+            text: "Hành động này không thể hoàn tác!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Xóa!",
+            cancelButtonText: "Hủy"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let lessonIdNum = parseInt(lessonId, 10);
+                let lessonIndex = lessons.findIndex(lesson => lesson.id === lessonIdNum);
+
+                if (lessonIndex !== -1) {
+                    lessons.splice(lessonIndex, 1);
+                    saveToStorage(lessons, nextLessonId);
+                    renderTable(); // Re-render handles pagination adjustment
+                    Swal.fire("Đã xóa!", "Bài học đã được xóa.", "success");
+                } else {
+                    Swal.fire("Lỗi!", `Không tìm thấy bài học để xóa (ID: ${lessonId}).`, "error");
                 }
-            });
+            }
         });
-    } else {
-        console.warn("Logout button ('user-logout-btn') not found.");
     }
 
-    // --- Populate Category Filter/Selects ---
-    function populateCategorySelects() {
-        // TODO: Fetch actual categories. Using placeholder data for now.
-        // Ideally, this data should also come from localStorage or an API.
-        let CATEGORIES_STORAGE_KEY = 'categoriesData'; // Example key
-        let categories = [];
-        let storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+    function openModal(title, buttonText, lessonData = null) {
+        addLessonForm.reset();
+        addLessonModal.querySelector('h2').textContent = title;
+        addLessonModal.querySelector('button[type="submit"]').textContent = buttonText;
+        populateCategorySelects(lessonCategoryModalSelect); // Ensure modal select is populated
 
-        if (storedCategories) {
-             try {
-                let parsed = JSON.parse(storedCategories);
-                if (Array.isArray(parsed)) {
-                    categories = parsed;
-                }
-             } catch (e) {
-                 console.error("Error parsing categories from localStorage:", e);
-             }
-        }
-
-        // Fallback if no categories loaded
-        if (categories.length === 0) {
-             console.warn("No categories found in localStorage. Using default examples.");
-             categories = [
-                { id: 1, name: "HTML" },
-                { id: 2, name: "CSS" },
-                { id: 3, name: "JavaScript Basic" },
-                { id: 4, name: "ReactJS" },
-             ];
-             // Optionally save default categories back to localStorage
-             // localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
-        }
-
-
-        let categorySelectModal = document.querySelector("#add-lesson-form select[name='lesson-category']");
-        // let categoryFilterSelect = document.getElementById("status-filter"); // This is for STATUS, not category
-
-        // Populate the SELECT inside the modal
-        if (categorySelectModal) {
-            categorySelectModal.innerHTML = '<option value="">-- Chọn môn học --</option>'; // Default/empty option
-            categories.forEach(cat => {
-                let option = document.createElement('option');
-                option.value = cat.id; // Use category ID as the value
-                option.textContent = cat.name; // Display category name
-                categorySelectModal.appendChild(option);
-            });
+        if (lessonData) {
+            document.getElementById("lesson-name").value = lessonData.lesson_name;
+            document.getElementById("lesson-duration").value = lessonData.time;
+            // Use the correct ID for the modal select
+            lessonCategoryModalSelect.value = lessonData.subject_id || "";
+            addLessonForm.dataset.editingId = lessonData.id;
         } else {
-             console.error("Category select dropdown in modal not found!");
+            addLessonForm.removeAttribute('data-editing-id');
         }
 
-        // Ensure the main STATUS filter dropdown is correctly set up
-        let statusFilterSelect = document.getElementById("status-filter");
-        if (statusFilterSelect) {
-             // Ensure options are correct and set initial value
-             statusFilterSelect.innerHTML = `
-                <option value="all">Lọc theo trạng thái</option>
-                <option value="complete">Hoàn thành</option>
-                <option value="incomplete">Chưa hoàn thành</option>
-             `;
-             statusFilterSelect.value = currentFilter; // Set dropdown to reflect current filter state
+        addLessonModal.style.display = "block";
+    }
+
+    function closeModalHandler() {
+        addLessonModal.style.display = "none";
+        addLessonForm.removeAttribute('data-editing-id');
+    }
+
+    function handleOpenAddModal() {
+        openModal("Thêm mới bài học", "Thêm");
+    }
+
+    function handleOpenEditModal(lessonId) {
+        let lessonIdNum = parseInt(lessonId, 10);
+        let lessonToEdit = lessons.find(lesson => lesson.id === lessonIdNum);
+        if (lessonToEdit) {
+            openModal("Chỉnh sửa bài học", "Lưu thay đổi", lessonToEdit);
         } else {
-             console.error("Status filter dropdown not found!");
+            Swal.fire("Lỗi", "Không tìm thấy bài học để sửa.", "error");
         }
     }
 
+    function handleFormSubmit(event) {
+        event.preventDefault();
 
-    // --- Initial Setup ---
-    populateCategorySelects(); // Populate dropdowns first
-    renderTable(); // Initial render of the table and pagination
+        let lessonNameInput = document.getElementById("lesson-name");
+        let lessonName = lessonNameInput.value.trim();
+        // Use the correct ID for the modal select
+        let lessonCategoryValue = lessonCategoryModalSelect.value;
+        let lessonDurationInput = document.getElementById("lesson-duration");
+        let lessonDuration = parseInt(lessonDurationInput.value, 10);
+
+        let editingId = addLessonForm.dataset.editingId ? parseInt(addLessonForm.dataset.editingId, 10) : null;
+
+        // Validation
+        if (!lessonName) {
+            Swal.fire("Thiếu thông tin", "Vui lòng nhập tên bài học.", "warning").then(() => lessonNameInput.focus());
+            return;
+        }
+        if (!lessonCategoryValue) { // Check if a category is selected
+             Swal.fire("Thiếu thông tin", "Vui lòng chọn môn học.", "warning").then(() => lessonCategoryModalSelect.focus());
+             return;
+        }
+        let lessonCategoryId = parseInt(lessonCategoryValue, 10); // Convert selected value to number
+
+        if (isNaN(lessonDuration) || lessonDuration <= 0) {
+            Swal.fire("Dữ liệu không hợp lệ", "Thời gian học phải là một số dương.", "warning").then(() => lessonDurationInput.focus());
+            return;
+        }
+
+        let lessonNameLower = lessonName.toLowerCase();
+        let isDuplicate = lessons.some(lesson =>
+            lesson.lesson_name.toLowerCase() === lessonNameLower && lesson.id !== editingId
+        );
+
+        if (isDuplicate) {
+            Swal.fire("Trùng lặp", "Tên bài học này đã tồn tại.", "error").then(() => lessonNameInput.focus());
+            return;
+        }
+
+        if (editingId !== null) {
+            // Update Existing Lesson
+            let lessonIndex = lessons.findIndex(lesson => lesson.id === editingId);
+            if (lessonIndex !== -1) {
+                lessons[lessonIndex].lesson_name = lessonName;
+                lessons[lessonIndex].time = lessonDuration;
+                lessons[lessonIndex].subject_id = lessonCategoryId; // Assign the parsed category ID
+                // Status is not changed here
+
+                saveToStorage(lessons, nextLessonId);
+                renderTable();
+                closeModalHandler();
+                Swal.fire("Thành công!", "Đã cập nhật bài học.", "success");
+            } else {
+                Swal.fire("Lỗi", "Không tìm thấy bài học để cập nhật.", "error");
+            }
+        } else {
+            // Add New Lesson
+            let newLesson = {
+                id: nextLessonId,
+                subject_id: lessonCategoryId, // Assign the parsed category ID
+                lesson_name: lessonName,
+                time: lessonDuration,
+                status: "incomplete", // Default status
+            };
+
+            lessons.push(newLesson);
+            nextLessonId++;
+
+            saveToStorage(lessons, nextLessonId);
+
+            // Go to the page where the new item will be, considering current filters
+            currentCategoryFilter = "all"; // Optionally reset filters after adding
+            currentStatusFilter = "all";
+            currentSearchTerm = "";
+            categoryFilterSelect.value = "all";
+            statusFilterSelect.value = "all";
+            searchInput.value = "";
+
+            // Calculate page based on *all* items since we reset filters
+            currentPage = Math.ceil(lessons.length / lessonsPerPage);
+
+            renderTable();
+            closeModalHandler();
+            Swal.fire("Thành công!", "Đã thêm bài học mới.", "success");
+        }
+    }
+
+    function handleCategoryFilterChange() {
+        currentCategoryFilter = categoryFilterSelect.value;
+        currentPage = 1;
+        renderTable();
+    }
+
+    function handleStatusFilterChange() {
+        currentStatusFilter = statusFilterSelect.value;
+        currentPage = 1;
+        renderTable();
+    }
+
+    function performSearch() {
+        currentSearchTerm = searchInput.value.trim();
+        currentPage = 1;
+        renderTable();
+    }
+
+    function handleSearchInput(event) {
+        clearTimeout(searchTimeout);
+        if (event.key === "Enter") {
+            performSearch();
+        } else {
+            searchTimeout = setTimeout(performSearch, 300);
+        }
+    }
+
+    function handleLogout() {
+         Swal.fire({
+            title: 'Bạn có chắc chắn muốn đăng xuất?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Đăng xuất',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Optional: Clear specific storage items on logout
+                // localStorage.removeItem(LESSONS_STORAGE_KEY);
+                // localStorage.removeItem(NEXT_ID_STORAGE_KEY);
+                // localStorage.removeItem(CATEGORIES_STORAGE_KEY);
+                window.location.href = './login.html'; // Redirect
+            }
+        });
+    }
+
+    // --- Initialization ---
+
+    function populateCategorySelects(selectElement, addAllOption = false) {
+        if (!selectElement) return;
+
+        // Store current value if editing/filtering
+        const currentValue = selectElement.value;
+
+        selectElement.innerHTML = ''; // Clear existing options
+
+        if (addAllOption) {
+            let allOption = document.createElement('option');
+            allOption.value = "all";
+            allOption.textContent = "Tất cả môn học";
+            selectElement.appendChild(allOption);
+        } else {
+             // Add default prompt for modal select
+             let defaultOption = document.createElement('option');
+             defaultOption.value = ""; // Empty value for prompt
+             defaultOption.textContent = "-- Chọn môn học --";
+             defaultOption.disabled = true; // Optional: disable it
+             defaultOption.selected = true; // Select it by default
+             selectElement.appendChild(defaultOption);
+        }
+
+
+        categories.forEach(cat => {
+            let option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            selectElement.appendChild(option);
+        });
+
+        // Restore previously selected value if it exists
+        if (currentValue && selectElement.querySelector(`option[value="${currentValue}"]`)) {
+             selectElement.value = currentValue;
+        } else if (!addAllOption && !currentValue) {
+             // Ensure the prompt is selected if no value was previously set in modal
+             selectElement.value = "";
+        } else if (addAllOption && !currentValue) {
+             selectElement.value = "all"; // Default to 'all' for filter dropdown
+        }
+    }
+
+    function initializeApp() {
+        // Load data
+        categories = loadCategoriesFromStorage();
+        lessons = getLessonsFromStorage();
+        nextLessonId = getNextIdFromStorage(lessons);
+
+        // Save initial default data if storage was empty
+        if (!localStorage.getItem(LESSONS_STORAGE_KEY)) {
+            saveToStorage(lessons, nextLessonId);
+        }
+         if (!localStorage.getItem(CATEGORIES_STORAGE_KEY)) {
+             // Only save default categories if they were loaded because storage was empty
+             // saveCategoriesToStorage(categories); // Uncomment if you want to save defaults
+         }
+
+
+        // Populate UI elements
+        populateCategorySelects(categoryFilterSelect, true); // Populate filter dropdown
+        populateCategorySelects(lessonCategoryModalSelect, false); // Populate modal dropdown
+        categoryFilterSelect.value = currentCategoryFilter; // Set initial filter value
+        statusFilterSelect.value = currentStatusFilter;   // Set initial status filter value
+
+        // Add Event Listeners using event delegation where possible
+        lessonTableBody.addEventListener('click', function(event) {
+            let target = event.target;
+            let deleteButton = target.closest('button.delete');
+            let editButton = target.closest('button.edit');
+
+            if (deleteButton) {
+                handleDeleteLesson(deleteButton.dataset.lessonId);
+            } else if (editButton) {
+                handleOpenEditModal(editButton.dataset.lessonId);
+            }
+        });
+
+        addLessonBtn.addEventListener("click", handleOpenAddModal);
+        closeModalBtn.addEventListener("click", closeModalHandler);
+        window.addEventListener("click", (event) => {
+            if (event.target == addLessonModal) closeModalHandler();
+        });
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && addLessonModal.style.display === 'block') closeModalHandler();
+        });
+        addLessonForm.addEventListener("submit", handleFormSubmit);
+        categoryFilterSelect.addEventListener("change", handleCategoryFilterChange); // Listener for category filter
+        statusFilterSelect.addEventListener("change", handleStatusFilterChange);     // Listener for status filter
+        searchInput.addEventListener("keyup", handleSearchInput);
+        searchIcon.addEventListener("click", performSearch);
+
+        let userLogoutBtn = document.getElementById('user-logout-btn');
+        if (userLogoutBtn) {
+            userLogoutBtn.addEventListener('click', handleLogout);
+        } else {
+            console.warn("Logout button ('user-logout-btn') not found.");
+        }
+
+        // Initial Render
+        renderTable();
+    }
+
+    // Start the application
+    initializeApp();
 
 }); // End DOMContentLoaded
