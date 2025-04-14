@@ -27,43 +27,50 @@
             </div>
         </div>
         <div class="right">
-            <div>
-                <p>🔔 ⚙</p>
-                <hr>
+            <div class="top">
+                <img src="../Asset/Icon/Icon/Icon button.png" alt="">
+                <div>
+                    <img src="../Asset/Icon/Icon/chuông.png" alt="">
+                    <img src="../Asset/Icon/Icon/dấuhỏi.png" alt="">
+                    <img src="../Asset/Icon/Icon/setting.png" alt="">
+                    <button id="user-logout-btn">
+                        <img id="user-image" src="../Asset/image/Avatar w. photo.png" alt="">
+                    </button>
+                </div>
             </div>
+            <hr>
+            <p class="bai-hoc">Bài học</p>
             <div class="main">
-                <p>Bài học</p>
                 <select id="status-filter">
-                    <option value="all">Lọc theo trạng thái</option>
-                    <option value="active">Đang hoạt động</option>
-                    <option value="inactive">Ngừng hoạt động</option>
+                    <option value="all">Lọc theo môn học</option>
+                    <option value="active"></option>
+                    <option value="inactive"></option>
                 </select>
                 <button id="add-lesson-btn">Thêm mới bài học</button>
             </div>
             <div class="search">
-                <input type="text" placeholder="Tìm kiếm môn học theo tên...">
-                <img src="../Asset/Icon/32px/Vector.png" alt="">
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Tìm kiếm bài học theo tên...">
+                    <img id="search-icon" src="../Asset/Icon/32px/Vector.png" alt="Search Icon">
+                </div>
             </div>
+            <br><br>
             <table>
                 <thead>
                     <tr>
-                        <th><input type="checkbox" name="" id=""> Tên bài học ↓</th>
-                        <th>Thời gian học ↓</th>
+                        <th><input type="checkbox" name="" id="">Tên bài học<img id="arrow-down" src="../Asset/Icon/32px/arrow-down.png" alt=""></th>
+                        <th>Thời gian học<img id="arrow_down" src="../Asset/Icon/32px/arrow-down.png" alt=""></th>
                         <th>Trạng thái</th>
                         <th>Chức năng</th>
                     </tr>
                 </thead>
                 <tbody id="lesson-table-body">
-                    <!-- Lesson rows will be added here -->
                 </tbody>
             </table>
             <div class="pagination" id="pagination">
-                <!-- Pagination buttons will be added here -->
             </div>
         </div>
     </div>
-
-    <!-- Add Lesson Modal -->
     <div id="add-lesson-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -71,16 +78,14 @@
             <form id="add-lesson-form">
                 <label for="lesson-name">Tên bài học:</label>
                 <input type="text" id="lesson-name" name="lesson-name" required><br><br>
-
+                <label for="lesson-category">Loại môn học:</label>
+                <select name="lesson-category" id="">
+                    <option value="all"></option>
+                    <option value=""></option>
+                    <option value=""></option>
+                </select>
                 <label for="lesson-duration">Thời gian học:</label>
                 <input type="number" id="lesson-duration" name="lesson-duration" required><br><br>
-
-                <label for="lesson-status">Trạng thái:</label>
-                <select id="lesson-status" name="lesson-status">
-                    <option value="active">Đang hoạt động</option>
-                    <option value="inactive">Ngừng hoạt động</option>
-                </select><br><br>
-
                 <button type="submit">Thêm</button>
             </form>
         </div>

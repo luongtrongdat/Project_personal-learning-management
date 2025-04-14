@@ -27,12 +27,20 @@
             </div>
         </div>
         <div class="right">
-            <div>
-                <p>🔔 ⚙</p>
-                <hr>
+            <div class="top">
+                <img src="../Asset/Icon/Icon/Icon button.png" alt="">
+                <div>
+                    <img src="../Asset/Icon/Icon/chuông.png" alt="">
+                    <img src="../Asset/Icon/Icon/dấuhỏi.png" alt="">
+                    <img src="../Asset/Icon/Icon/setting.png" alt="">
+                    <button id="user-logout-btn">
+                        <img id="user-image" src="../Asset/image/Avatar w. photo.png" alt="">
+                    </button>
+                </div>
             </div>
+            <hr>
+            <p class="mon-hoc">Môn học</p>
             <div class="main">
-                <p>Môn học</p>
                 <select id="status-filter">
                     <option value="all">Lọc theo trạng thái</option>
                     <option value="active">Đang hoạt động</option>
@@ -41,13 +49,16 @@
                 <button id="add-category-btn">Thêm mới môn học</button>
             </div>
             <div class="search">
-                <input type="text" placeholder="Tìm kiếm môn học theo tên...">
-                <img src="../Asset/Icon/32px/Vector.png" alt="">
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Tìm kiếm môn học theo tên...">
+                    <img id="search-icon" src="../Asset/Icon/32px/Vector.png" alt="Search Icon">
+                </div>
             </div>
+            <br><br>
             <table>
                 <thead>
                     <tr>
-                        <th>Tên môn học ↓</th>
+                        <th>Tên môn học<img id="arrow-down" src="../Asset/Icon/32px/arrow-down.png" alt=""></th>
                         <th>Trạng thái</th>
                         <th>Chức năng</th>
                     </tr>
